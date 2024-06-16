@@ -9,15 +9,15 @@ namespace lyricboxd.Models
 
         [Required]
         [StringLength(60)]
-        public string Username { get; set; }
+        public string Username { get; set; } = string.Empty;
 
         [Required]
         [StringLength(120)]
         [EmailAddress]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         [Required]
         [StringLength(225)]
-        public string Password { get; set; }
+        public string Password { get; set; } = string.Empty;
     }
 }
