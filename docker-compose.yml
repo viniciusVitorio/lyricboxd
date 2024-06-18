@@ -5,6 +5,8 @@ services:
       - "8000:8080"
     depends_on:
       - db
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
 
   db:
     image: postgres
