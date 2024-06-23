@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using lyricboxd.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace lyricboxd.Data
 {
@@ -11,5 +11,7 @@ namespace lyricboxd.Data
         }
 
         public DbSet<User> User { get; set; }
+
+        public DbSet<Review> Reviews { get; set; }
     }
 }
