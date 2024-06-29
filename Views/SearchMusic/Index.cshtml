@@ -1,0 +1,44 @@
+﻿@page
+@using lyricboxd.Pages.SearchMusic
+@model SearchMusicModel
+@{
+    ViewData["Title"] = "Search Music";
+}
+
+<h1>Search Music</h1>
+
+<div>
+    <input type="text" id="searchQuery" placeholder="Enter song or artist name" />
+    <button id="searchButton">Search</button>
+</div>
+
+<div id="searchResults"></div>
+
+@section Scripts {
+    <script>
+        document.getElementById("searchButton").addEventListener("click", function () {
+            var query = document.getElementById("searchQuery").value;
+            fetch(`/SearchMusic/Results?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    var resultsDiv = document.getElementById("searchResults");
+                    resultsDiv.innerHTML = '';
+                    data.tracks.items.forEach(track => {
+                        var trackDiv = document.createElement("div");
+                        trackDiv.innerHTML = `
+                            <div>
+                                <img src="${track.album.images[0].url}" width="50" height="50" />
+                                <span>${track.name} by ${track.artists[0].name}</span>
+                                <button onclick="selectTrack('${track.id}')">Select</button>
+                            </div>
+                        `;
+                        resultsDiv.appendChild(trackDiv);
+                    });
+                });
+        });
+
+        function selectTrack(trackId) {
+            window.location.href = `/Reviews/Create?trackId=${trackId}`;
+        }
+    </script>
+}

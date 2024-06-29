@@ -1,0 +1,97 @@
+﻿@model List<TrackViewModel>
+
+@{
+    ViewData["Title"] = "CreateWithSpotify";
+}
+
+<h1>Create With Spotify</h1>
+
+<h4>Select a Track</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <div class="form-group">
+            <label for="trackName">Track Name</label>
+            <input type="text" id="trackName" name="trackName" class="form-control" onkeyup="searchTracks()" />
+        </div>
+    </div>
+</div>
+
+<div id="searchResults" class="row"></div>
+
+<div id="trackDetails" class="row" style="display:none;">
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <img id="albumCover" class="card-img-top" alt="Album Cover">
+            <div class="card-body">
+                <h5 id="trackNameDetail" class="card-title"></h5>
+                <p id="artistNameDetail" class="card-text"></p>
+                <p id="albumNameDetail" class="card-text"></p>
+                <p id="releaseYearDetail" class="card-text"></p>
+                <form asp-action="CreateWithSpotify" method="post">
+                    <input type="hidden" id="songId" name="songId" />
+                    <div class="form-group">
+                        <label for="rating">Rating</label>
+                        <input type="number" id="rating" name="rating" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewText">Review Text</label>
+                        <textarea id="reviewText" name="reviewText" class="form-control"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Select Track</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var clientId = '@ViewBag.ClientId';
+        var clientSecret = '@ViewBag.ClientSecret';
+
+        function searchTracks() {
+            var query = document.getElementById('trackName').value;
+            if (query.length < 3) {
+                document.getElementById('searchResults').innerHTML = "";
+                return;
+            }
+
+            fetch('/Reviews/SearchTracks?query=' + query)
+                .then(response => response.json())
+                .then(data => {
+                    var resultsDiv = document.getElementById('searchResults');
+                    resultsDiv.innerHTML = "";
+
+                    data.forEach(track => {
+                        var trackDiv = document.createElement('div');
+                        trackDiv.classList.add('col-md-4');
+                        trackDiv.innerHTML = `
+                                    <div class="card mb-4 shadow-sm">
+                                        <div class="card-body">
+                                            <h5 class="card-title">${track.name}</h5>
+                                            <p class="card-text"><strong>Artist:</strong> ${track.artist}</p>
+                                            <button class="btn btn-primary" onclick="selectTrack('${track.id}')">Select</button>
+                                        </div>
+                                    </div>`;
+                        resultsDiv.appendChild(trackDiv);
+                    });
+                });
+        }
+
+        function selectTrack(trackId) {
+            fetch(`/Reviews/GetTrack?trackId=${trackId}&clientId=${clientId}&clientSecret=${clientSecret}`)
+                .then(response => response.json())
+                .then(track => {
+                    document.getElementById('songId').value = track.id;
+                    document.getElementById('trackNameDetail').innerText = track.name;
+                    document.getElementById('artistNameDetail').innerText = `Artist: ${track.artist}`;
+                    document.getElementById('albumNameDetail').innerText = `Album: ${track.album}`;
+                    document.getElementById('releaseYearDetail').innerText = `Release Year: ${track.releaseYear}`;
+                    document.getElementById('albumCover').src = track.albumCoverUrl;
+
+                    document.getElementById('trackDetails').style.display = 'block';
+                });
+        }
+    </script>
+}

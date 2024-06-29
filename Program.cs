@@ -1,10 +1,13 @@
 using lyricboxd.Data;
+using lyricboxd.Services;
 using Microsoft.EntityFrameworkCore;
 internal class Program
 {
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        builder.Services.AddSingleton<HttpClient>();
+        builder.Services.AddScoped<SpotifyService>();
 
         // Add services to the container.
         builder.Services.AddControllersWithViews();

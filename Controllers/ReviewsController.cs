@@ -1,22 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using lyricboxd.Data;
+using lyricboxd.Models;
+using lyricboxd.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using lyricboxd.Data;
-using lyricboxd.Models;
 
 namespace lyricboxd.Controllers
 {
     public class ReviewsController : Controller
     {
         private readonly LyricboxdDbContext _context;
+        private readonly SpotifyService _spotifyService;
+        private readonly IConfiguration _configuration;
 
-        public ReviewsController(LyricboxdDbContext context)
+        public ReviewsController(LyricboxdDbContext context, SpotifyService spotifyService, IConfiguration configuration)
         {
             _context = context;
+            _spotifyService = spotifyService;
+            _configuration = configuration;
         }
 
         // GET: Reviews
@@ -159,6 +160,80 @@ namespace lyricboxd.Controllers
         private bool ReviewExists(int id)
         {
             return _context.Reviews.Any(e => e.Id == id);
+        }
+
+        // GET: Reviews/CreateWithSpotify
+        [HttpGet]
+        [HttpGet]
+        public async Task<IActionResult> CreateWithSpotify(string trackName)
+        {
+            ViewBag.ClientId = _configuration["Spotify:ClientId"];
+            ViewBag.ClientSecret = _configuration["Spotify:ClientSecret"];
+
+            if (string.IsNullOrEmpty(trackName))
+            {
+                ViewData["UserId"] = new SelectList(_context.User, "Id", "Email");
+                return View();
+            }
+
+            var clientId = _configuration["Spotify:ClientId"];
+            var clientSecret = _configuration["Spotify:ClientSecret"];
+            var accessToken = await _spotifyService.GetAccessToken(clientId, clientSecret);
+            var searchResult = await _spotifyService.SearchTracks(accessToken, trackName);
+
+            // Extrair informações relevantes para a View
+            var tracks = searchResult["tracks"]["items"].ToList();
+            var model = tracks.Select(track => new TrackViewModel
+            {
+                Id = track["id"].ToString(),
+                Name = track["name"].ToString(),
+                Artist = track["artists"][0]["name"].ToString(),
+                Album = track["album"]["name"].ToString(),
+                ReleaseYear = track["album"]["release_date"].ToString().Split('-')[0],
+                AlbumCoverUrl = track["album"]["images"][0]["url"].ToString()
+            }).ToList();
+
+            ViewData["UserId"] = new SelectList(_context.User, "Id", "Email");
+            return View(model);
+        }
+
+        // POST: Reviews/CreateWithSpotify
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateWithSpotify([Bind("Id,UserId,SongId,Rating,ReviewText,CreatedAt")] Review review)
+        {
+            if (ModelState.IsValid)
+            {
+                _context.Add(review);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            ViewData["UserId"] = new SelectList(_context.User, "Id", "Email", review.UserId);
+            return View(review);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SearchTracks(string query)
+        {
+            if (string.IsNullOrEmpty(query))
+            {
+                return BadRequest("Query is required.");
+            }
+
+            var clientId = _configuration["Spotify:ClientId"];
+            var clientSecret = _configuration["Spotify:ClientSecret"];
+            var accessToken = await _spotifyService.GetAccessToken(clientId, clientSecret);
+            var searchResult = await _spotifyService.SearchTracks(accessToken, query);
+
+            // Extrair informações relevantes para a View
+            var tracks = searchResult["tracks"]["items"].Select(track => new TrackViewModel
+            {
+                Id = track["id"].ToString(),
+                Name = track["name"].ToString(),
+                Artist = track["artists"][0]["name"].ToString()
+            }).ToList();
+
+            return Json(tracks);
         }
     }
 }
