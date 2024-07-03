@@ -12,8 +12,8 @@ services:
     image: postgres
     environment:
       POSTGRES_DB: 'lyricboxd'
-      POSTGRES_USER: 'lyricboxd'
-      POSTGRES_PASSWORD: '123321'
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: '123'
     ports:
       - "5432:5432"
     volumes:
