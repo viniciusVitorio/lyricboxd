@@ -19,26 +19,35 @@
 
 <div id="searchResults" class="row"></div>
 
-<div id="trackDetails" class="row" style="display:none;">
-    <div class="col-md-4">
-        <div class="card mb-4 shadow-sm">
-            <img id="albumCover" class="card-img-top" alt="Album Cover">
-            <div class="card-body">
-                <h5 id="trackNameDetail" class="card-title"></h5>
-                <p id="artistNameDetail" class="card-text"></p>
-                <p id="albumNameDetail" class="card-text"></p>
-                <p id="releaseYearDetail" class="card-text"></p>
-                <form asp-action="CreateWithSpotify" method="post">
-                    <input type="hidden" id="songId" name="songId" />
+<div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ratingModalLabel">Rate this Track</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h4 id="modalTrackTitle" class="text-center mt-3"></h4>
+                <h6 id="modalArtistName" class="text-center mb-3"></h6>
+                <form id="ratingForm">
+                    <input type="hidden" id="songIdModal" name="songIdModal" />
                     <div class="form-group">
-                        <label for="rating">Rating</label>
-                        <input type="number" id="rating" name="rating" class="form-control" />
+                        <label for="trackRating">Rating</label>
+                        <div id="trackRating">
+                            <i class="far fa-star" data-index="0"></i>
+                            <i class="far fa-star" data-index="1"></i>
+                            <i class="far fa-star" data-index="2"></i>
+                            <i class="far fa-star" data-index="3"></i>
+                            <i class="far fa-star" data-index="4"></i>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="reviewText">Review Text</label>
-                        <textarea id="reviewText" name="reviewText" class="form-control"></textarea>
+                        <label for="ratingReason">Reason</label>
+                        <textarea class="form-control" id="ratingReason" rows="3"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Select Track</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
             </div>
         </div>
@@ -49,6 +58,7 @@
     <script>
         var clientId = '@ViewBag.ClientId';
         var clientSecret = '@ViewBag.ClientSecret';
+        let selectedRating = 0;
 
         function searchTracks() {
             var query = document.getElementById('trackName').value;
@@ -67,31 +77,34 @@
                         var trackDiv = document.createElement('div');
                         trackDiv.classList.add('col-md-4');
                         trackDiv.innerHTML = `
-                                    <div class="card mb-4 shadow-sm">
-                                        <div class="card-body">
-                                            <h5 class="card-title">${track.name}</h5>
-                                            <p class="card-text"><strong>Artist:</strong> ${track.artist}</p>
-                                            <button class="btn btn-primary" onclick="selectTrack('${track.id}')">Select</button>
-                                        </div>
-                                    </div>`;
+                            <div class="card mb-4 shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">${track.name}</h5>
+                                    <p class="card-text"><strong>Artist:</strong> ${track.artist}</p>
+                                    <button class="btn btn-primary" onclick="openRatingModal('${track.id}', '${track.name}', '${track.artist}')">Select</button>
+                                </div>
+                            </div>`;
                         resultsDiv.appendChild(trackDiv);
                     });
                 });
         }
 
-        function selectTrack(trackId) {
-            fetch(`/Reviews/GetTrack?trackId=${trackId}&clientId=${clientId}&clientSecret=${clientSecret}`)
-                .then(response => response.json())
-                .then(track => {
-                    document.getElementById('songId').value = track.id;
-                    document.getElementById('trackNameDetail').innerText = track.name;
-                    document.getElementById('artistNameDetail').innerText = `Artist: ${track.artist}`;
-                    document.getElementById('albumNameDetail').innerText = `Album: ${track.album}`;
-                    document.getElementById('releaseYearDetail').innerText = `Release Year: ${track.releaseYear}`;
-                    document.getElementById('albumCover').src = track.albumCoverUrl;
+        function openRatingModal(trackId, trackName, artistName) {
+            document.getElementById('modalTrackTitle').innerText = trackName;
+            document.getElementById('modalArtistName').innerText = artistName;
 
-                    document.getElementById('trackDetails').style.display = 'block';
-                });
+            document.getElementById('songIdModal').value = trackId;
+            $('#ratingModal').modal('show');
         }
+
+        $(document).ready(function() {
+            $('#trackRating i').on('click', function() {
+                selectedRating = parseInt($(this).data('index')) + 1;
+                $('#trackRating i').removeClass('fas').addClass('far');
+                for (var i = 0; i < selectedRating; i++) {
+                    $('#trackRating i').eq(i).removeClass('far').addClass('fas');
+                }
+            });
+        });
     </script>
 }
