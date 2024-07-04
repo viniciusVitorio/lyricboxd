@@ -235,5 +235,40 @@ namespace lyricboxd.Controllers
 
             return Json(tracks);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> SubmitRating(string songId, int rating, string reason)
+        {
+            if (string.IsNullOrEmpty(songId) || rating < 1 || rating > 5)
+            {
+                return Json(new { success = false, message = "Invalid input." });
+            }
+
+            try
+            {
+                var review = new Review
+                {
+                    SongId = songId,
+                    Rating = rating,
+                    ReviewText = reason,
+                    CreatedAt = DateTime.UtcNow, 
+                    UserId = new Guid("2932766f-ec9e-4d1b-80d9-9dc9879d9131")// Here it is necessary to pass the GUID of the user; this one is used just for a test case
+                };
+
+                _context.Reviews.Add(review);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Rating submitted successfully." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while submitting rating: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
+                return Json(new { success = false, message = "An error occurred while submitting your rating." });
+            }
+        }
     }
 }
