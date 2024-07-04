@@ -54,11 +54,12 @@
     </div>
 </div>
 
+
 @section Scripts {
     <script>
         var clientId = '@ViewBag.ClientId';
         var clientSecret = '@ViewBag.ClientSecret';
-        let selectedRating = 0;
+        var selectedRating = 0;
 
         function searchTracks() {
             var query = document.getElementById('trackName').value;
@@ -77,13 +78,13 @@
                         var trackDiv = document.createElement('div');
                         trackDiv.classList.add('col-md-4');
                         trackDiv.innerHTML = `
-                            <div class="card mb-4 shadow-sm">
-                                <div class="card-body">
-                                    <h5 class="card-title">${track.name}</h5>
-                                    <p class="card-text"><strong>Artist:</strong> ${track.artist}</p>
-                                    <button class="btn btn-primary" onclick="openRatingModal('${track.id}', '${track.name}', '${track.artist}')">Select</button>
-                                </div>
-                            </div>`;
+                                    <div class="card mb-4 shadow-sm">
+                                        <div class="card-body">
+                                            <h5 class="card-title">${track.name}</h5>
+                                            <p class="card-text"><strong>Artist:</strong> ${track.artist}</p>
+                                            <button class="btn btn-primary" onclick="openRatingModal('${track.id}', '${track.name}', '${track.artist}')">Select</button>
+                                        </div>
+                                    </div>`;
                         resultsDiv.appendChild(trackDiv);
                     });
                 });
@@ -92,19 +93,46 @@
         function openRatingModal(trackId, trackName, artistName) {
             document.getElementById('modalTrackTitle').innerText = trackName;
             document.getElementById('modalArtistName').innerText = artistName;
-
             document.getElementById('songIdModal').value = trackId;
             $('#ratingModal').modal('show');
         }
 
-        $(document).ready(function() {
-            $('#trackRating i').on('click', function() {
+        $(document).ready(function () {
+            $('#trackRating i').on('click', function () {
                 selectedRating = parseInt($(this).data('index')) + 1;
                 $('#trackRating i').removeClass('fas').addClass('far');
                 for (var i = 0; i < selectedRating; i++) {
                     $('#trackRating i').eq(i).removeClass('far').addClass('fas');
                 }
             });
+
+            $('#ratingForm').on('submit', function (event) {
+                event.preventDefault();
+                var songId = $('#songIdModal').val();
+                var reason = $('#ratingReason').val();
+
+                $.ajax({
+                    url: '@Url.Action("SubmitRating", "Reviews")',
+                    type: 'POST',
+                    data: {
+                        songId: songId,
+                        rating: selectedRating,
+                        reason: reason
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            alert(response.message);
+                            $('#ratingModal').modal('hide');
+                        } else {
+                            alert('An error occurred while submitting your rating.');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        alert('An error occurred while submitting your rating.');
+                    }
+                });
+            });
         });
     </script>
 }
+
