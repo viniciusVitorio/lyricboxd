@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace lyricboxd.Controllers
 {
@@ -14,12 +15,14 @@ namespace lyricboxd.Controllers
         private readonly LyricboxdDbContext _context;
         private readonly SpotifyService _spotifyService;
         private readonly IConfiguration _configuration;
+        private readonly UserManager<User> _userManager;
 
-        public HomeController(LyricboxdDbContext context, SpotifyService spotifyService, IConfiguration configuration)
+        public HomeController(LyricboxdDbContext context, SpotifyService spotifyService, IConfiguration configuration, UserManager<User> userManager)
         {
             _context = context;
             _spotifyService = spotifyService;
             _configuration = configuration;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
@@ -52,6 +55,12 @@ namespace lyricboxd.Controllers
                     Review = review,
                     Track = trackViewModel
                 });
+            }
+
+            if (User.Identity.IsAuthenticated)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                ViewBag.UserName = user.UserName;
             }
 
             return View(reviewDetails);

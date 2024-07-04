@@ -4,6 +4,7 @@ using lyricboxd.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace lyricboxd.Controllers
 {
@@ -12,12 +13,14 @@ namespace lyricboxd.Controllers
         private readonly LyricboxdDbContext _context;
         private readonly SpotifyService _spotifyService;
         private readonly IConfiguration _configuration;
+        private readonly UserManager<User> _userManager;
 
-        public ReviewsController(LyricboxdDbContext context, SpotifyService spotifyService, IConfiguration configuration)
+        public ReviewsController(LyricboxdDbContext context, SpotifyService spotifyService, IConfiguration configuration, UserManager<User> userManager)
         {
             _context = context;
             _spotifyService = spotifyService;
             _configuration = configuration;
+            _userManager = userManager;
         }
 
         // GET: Reviews
@@ -49,13 +52,11 @@ namespace lyricboxd.Controllers
         // GET: Reviews/Create
         public IActionResult Create()
         {
-            ViewData["UserId"] = new SelectList(_context.User, "Id", "Email");
+            ViewData["UserId"] = new SelectList(_userManager.Users, "Id", "Email");
             return View();
         }
 
         // POST: Reviews/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,UserId,SongId,Rating,ReviewText,CreatedAt")] Review review)
@@ -66,7 +67,7 @@ namespace lyricboxd.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["UserId"] = new SelectList(_context.User, "Id", "Email", review.UserId);
+            ViewData["UserId"] = new SelectList(_userManager.Users, "Id", "Email", review.UserId);
             return View(review);
         }
 
@@ -83,13 +84,11 @@ namespace lyricboxd.Controllers
             {
                 return NotFound();
             }
-            ViewData["UserId"] = new SelectList(_context.User, "Id", "Email", review.UserId);
+            ViewData["UserId"] = new SelectList(_userManager.Users, "Id", "Email", review.UserId);
             return View(review);
         }
 
         // POST: Reviews/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,UserId,SongId,Rating,ReviewText,CreatedAt")] Review review)
@@ -119,7 +118,7 @@ namespace lyricboxd.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["UserId"] = new SelectList(_context.User, "Id", "Email", review.UserId);
+            ViewData["UserId"] = new SelectList(_userManager.Users, "Id", "Email", review.UserId);
             return View(review);
         }
 
@@ -164,7 +163,6 @@ namespace lyricboxd.Controllers
 
         // GET: Reviews/CreateWithSpotify
         [HttpGet]
-        [HttpGet]
         public async Task<IActionResult> CreateWithSpotify(string trackName)
         {
             ViewBag.ClientId = _configuration["Spotify:ClientId"];
@@ -172,7 +170,7 @@ namespace lyricboxd.Controllers
 
             if (string.IsNullOrEmpty(trackName))
             {
-                ViewData["UserId"] = new SelectList(_context.User, "Id", "Email");
+                ViewData["UserId"] = new SelectList(_userManager.Users, "Id", "Email");
                 return View();
             }
 
@@ -193,7 +191,7 @@ namespace lyricboxd.Controllers
                 AlbumCoverUrl = track["album"]["images"][0]["url"].ToString()
             }).ToList();
 
-            ViewData["UserId"] = new SelectList(_context.User, "Id", "Email");
+            ViewData["UserId"] = new SelectList(_userManager.Users, "Id", "Email");
             return View(model);
         }
 
@@ -208,7 +206,7 @@ namespace lyricboxd.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["UserId"] = new SelectList(_context.User, "Id", "Email", review.UserId);
+            ViewData["UserId"] = new SelectList(_userManager.Users, "Id", "Email", review.UserId);
             return View(review);
         }
 
@@ -251,7 +249,7 @@ namespace lyricboxd.Controllers
                     SongId = songId,
                     Rating = rating,
                     ReviewText = reason,
-                    CreatedAt = DateTime.UtcNow, 
+                    CreatedAt = DateTime.UtcNow,
                     UserId = new Guid("2932766f-ec9e-4d1b-80d9-9dc9879d9131")// Here it is necessary to pass the GUID of the user; this one is used just for a test case
                 };
 

@@ -2,22 +2,23 @@
 using lyricboxd.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace lyricboxd.Controllers
 {
     public class UsersController : Controller
     {
-        private readonly LyricboxdDbContext _context;
+        private readonly UserManager<User> _userManager;
 
-        public UsersController(LyricboxdDbContext context)
+        public UsersController(UserManager<User> userManager)
         {
-            _context = context;
+            _userManager = userManager;
         }
 
         // GET: Users
         public async Task<IActionResult> Index()
         {
-            return View(await _context.User.ToListAsync());
+            return View(await _userManager.Users.ToListAsync());
         }
 
         // GET: Users/Details/5
@@ -28,7 +29,7 @@ namespace lyricboxd.Controllers
                 return NotFound();
             }
 
-            var user = await _context.User
+            var user = await _userManager.Users
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (user == null)
             {
@@ -45,8 +46,6 @@ namespace lyricboxd.Controllers
         }
 
         // POST: Users/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Username,Email,Password")] User user)
@@ -54,9 +53,12 @@ namespace lyricboxd.Controllers
             if (ModelState.IsValid)
             {
                 user.Id = Guid.NewGuid();
-                _context.Add(user);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                var result = await _userManager.CreateAsync(user, user.Password);
+                if (result.Succeeded)
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+                AddErrors(result);
             }
             return View(user);
         }
@@ -69,7 +71,7 @@ namespace lyricboxd.Controllers
                 return NotFound();
             }
 
-            var user = await _context.User.FindAsync(id);
+            var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null)
             {
                 return NotFound();
@@ -78,8 +80,6 @@ namespace lyricboxd.Controllers
         }
 
         // POST: Users/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, [Bind("Id,Username,Email,Password")] User user)
@@ -91,23 +91,22 @@ namespace lyricboxd.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                var existingUser = await _userManager.FindByIdAsync(id.ToString());
+                if (existingUser == null)
                 {
-                    _context.Update(user);
-                    await _context.SaveChangesAsync();
+                    return NotFound();
                 }
-                catch (DbUpdateConcurrencyException)
+
+                existingUser.Username = user.Username;
+                existingUser.Email = user.Email;
+                // Atualize a senha se necessário
+
+                var result = await _userManager.UpdateAsync(existingUser);
+                if (result.Succeeded)
                 {
-                    if (!UserExists(user.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return RedirectToAction(nameof(Index));
                 }
-                return RedirectToAction(nameof(Index));
+                AddErrors(result);
             }
             return View(user);
         }
@@ -120,8 +119,7 @@ namespace lyricboxd.Controllers
                 return NotFound();
             }
 
-            var user = await _context.User
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null)
             {
                 return NotFound();
@@ -135,19 +133,31 @@ namespace lyricboxd.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var user = await _context.User.FindAsync(id);
+            var user = await _userManager.FindByIdAsync(id.ToString());
             if (user != null)
             {
-                _context.User.Remove(user);
+                var result = await _userManager.DeleteAsync(user);
+                if (result.Succeeded)
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+                AddErrors(result);
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool UserExists(Guid id)
         {
-            return _context.User.Any(e => e.Id == id);
+            return _userManager.Users.Any(e => e.Id == id);
+        }
+
+        private void AddErrors(IdentityResult result)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
         }
     }
 }
