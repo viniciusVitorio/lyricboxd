@@ -6,19 +6,20 @@
 
 <div class="container">
     <h1 class="text-center">Recent Reviews</h1>
-    <div class="row">
+    <div class="row d-flex flex-row-reverse justify-content-center">
         @foreach (var item in Model)
         {
             <div class="col-md-4">
-                <div class="card mb-4 shadow-sm">
+                <div class="">
                     <img src="@item.Track.AlbumCoverUrl" class="card-img-top" alt="Album Cover">
-                    <div class="card-body">
+                    <div class="card-review-body">
                         <h5 class="card-title">@item.Track.Name</h5>
                         <p class="card-text"><strong>Artist:</strong> @item.Track.Artist</p>
                         <p class="card-text"><strong>Album:</strong> @item.Track.Album</p>
                         <p class="card-text"><strong>User:</strong> @item.Review.User.Username</p>
                         <p class="card-text"><strong>Rating:</strong> @item.Review.Rating</p>
                         <p class="card-text"><strong>Review:</strong> @item.Review.ReviewText</p>
+                        <p class="card-text"><strong>Date:</strong> @item.Review.CreatedAt</p>
                     </div>
                 </div>
             </div>

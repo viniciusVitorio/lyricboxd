@@ -250,7 +250,7 @@ namespace lyricboxd.Controllers
                     Rating = rating,
                     ReviewText = reason,
                     CreatedAt = DateTime.UtcNow,
-                    UserId = new Guid("2932766f-ec9e-4d1b-80d9-9dc9879d9131")// Here it is necessary to pass the GUID of the user; this one is used just for a test case
+                    UserId = new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier))// Here it is necessary to pass the GUID of the user; this one is used just for a test case
                 };
 
                 _context.Reviews.Add(review);
