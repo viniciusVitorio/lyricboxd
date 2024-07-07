@@ -4,7 +4,6 @@
     ViewData["Title"] = "CreateWithSpotify";
 }
 
-<h1>Create With Spotify</h1>
 
 <h4>Select a Track</h4>
 <hr />
@@ -47,7 +46,9 @@
                         <label for="ratingReason">Reason</label>
                         <textarea class="form-control" id="ratingReason" rows="3"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="submit" class="btn btn-primary" style="float: right;margin-top: 15px;">
+                        SAVE
+                    </button>
                 </form>
             </div>
         </div>
@@ -76,12 +77,14 @@
 
                     data.forEach(track => {
                         var trackDiv = document.createElement('div');
-                        trackDiv.classList.add('col-md-4');
+                        trackDiv.classList.add('col-md-5');
                         trackDiv.innerHTML = `
-                                    <div class="card mb-4 shadow-sm">
+                                    <div class="">
                                         <div class="card-body">
-                                            <h5 class="card-title">${track.name}</h5>
-                                            <p class="card-text"><strong>Artist:</strong> ${track.artist}</p>
+                                            <div>
+                                                <h5 class="card-title">${track.name}</h5>
+                                                <p class="card-text"><strong>Artist:</strong> ${track.artist}</p>
+                                            </div>
                                             <button class="btn btn-primary" onclick="openRatingModal('${track.id}', '${track.name}', '${track.artist}')">Select</button>
                                         </div>
                                     </div>`;
